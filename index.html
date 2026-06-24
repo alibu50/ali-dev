@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ali-dev — مطوّر ثيمات وتطبيقات سلة</title>
+<meta name="description" content="ali-dev — شريك مطوّر في سلة. تصميم وتطوير ثيمات Twilight وتطبيقات مخصّصة لمتاجر سلة. Custom Salla Twilight themes & apps.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Tajawal:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0B1F24;
+    --ink-2:#0E262C;
+    --panel:#0F2C33;
+    --line:rgba(127,209,185,.16);
+    --gold:#E0B252;
+    --gold-soft:#f0cd86;
+    --mint:#7FD1B9;
+    --text:#E8F1EE;
+    --muted:#9DB4AF;
+    --code-key:#E0B252;
+    --code-str:#7FD1B9;
+    --code-punc:#6E8C86;
+    --maxw:1080px;
+    --display:'Space Grotesk',sans-serif;
+    --mono:'JetBrains Mono',monospace;
+  }
+  html[dir="rtl"]{--display:'Tajawal',sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--ink);
+    color:var(--text);
+    font-family:'Tajawal',sans-serif;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  html[dir="ltr"] body{font-family:'Space Grotesk',sans-serif}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+
+  /* ambient background */
+  .glow{position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background:
+      radial-gradient(60% 50% at 78% -5%, rgba(224,178,82,.10), transparent 60%),
+      radial-gradient(55% 45% at 10% 8%, rgba(127,209,185,.08), transparent 60%);
+  }
+
+  /* ---- top bar ---- */
+  header{position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);
+    background:rgba(11,31,36,.72);border-bottom:1px solid var(--line)}
+  .bar{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-weight:700;letter-spacing:.02em;direction:ltr}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--gold);box-shadow:0 0 12px var(--gold)}
+  .brand b{color:var(--text)}
+  .brand span{color:var(--gold)}
+  .nav{display:flex;align-items:center;gap:26px}
+  .nav a{font-size:14px;color:var(--muted);transition:color .2s}
+  .nav a:hover{color:var(--text)}
+  .langtoggle{font-family:var(--mono);font-size:12.5px;color:var(--text);
+    border:1px solid var(--line);background:transparent;border-radius:999px;
+    padding:7px 14px;cursor:pointer;transition:all .2s;letter-spacing:.04em}
+  .langtoggle:hover{border-color:var(--gold);color:var(--gold)}
+  @media(max-width:680px){.nav .link{display:none}}
+
+  /* ---- hero ---- */
+  .hero{padding:84px 0 64px;display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
+  @media(max-width:860px){.hero{grid-template-columns:1fr;padding:56px 0 40px;gap:36px}}
+  .eyebrow{font-family:var(--mono);font-size:13px;color:var(--mint);letter-spacing:.12em;
+    text-transform:uppercase;display:inline-flex;align-items:center;gap:9px;margin-bottom:22px}
+  .eyebrow::before{content:"";width:26px;height:1px;background:var(--mint);display:inline-block}
+  html[dir="rtl"] .eyebrow{letter-spacing:normal}
+  h1{font-family:var(--display);font-size:clamp(40px,6vw,68px);line-height:1.05;
+    font-weight:700;letter-spacing:-.02em}
+  html[dir="rtl"] h1{font-weight:800;letter-spacing:-.01em;line-height:1.12}
+  h1 .accent{color:var(--gold)}
+  .lede{margin-top:22px;font-size:clamp(17px,2vw,19px);color:var(--muted);max-width:46ch}
+  .cta{margin-top:34px;display:flex;gap:14px;flex-wrap:wrap}
+  .btn{font-family:var(--mono);font-size:14px;padding:13px 22px;border-radius:10px;
+    display:inline-flex;align-items:center;gap:9px;transition:all .22s;border:1px solid transparent}
+  .btn-gold{background:var(--gold);color:#1a1205;font-weight:700}
+  .btn-gold:hover{background:var(--gold-soft);transform:translateY(-2px)}
+  .btn-ghost{border-color:var(--line);color:var(--text)}
+  .btn-ghost:hover{border-color:var(--mint);color:var(--mint)}
+
+  /* ---- signature manifest ---- */
+  .manifest{background:linear-gradient(180deg,var(--panel),var(--ink-2));
+    border:1px solid var(--line);border-radius:16px;overflow:hidden;
+    box-shadow:0 30px 80px -40px rgba(0,0,0,.8);direction:ltr;text-align:left}
+  .manifest .top{display:flex;align-items:center;gap:8px;padding:13px 16px;
+    border-bottom:1px solid var(--line);background:rgba(0,0,0,.18)}
+  .manifest .top i{width:11px;height:11px;border-radius:50%;display:inline-block;opacity:.65}
+  .dot-r{background:#e06a5a}.dot-y{background:var(--gold)}.dot-g{background:var(--mint)}
+  .manifest .fname{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-inline-start:8px}
+  .code{font-family:var(--mono);font-size:13.5px;line-height:2;padding:20px 22px;white-space:pre;
+    overflow-x:auto}
+  .code .k{color:var(--code-key)}
+  .code .s{color:var(--code-str)}
+  .code .p{color:var(--code-punc)}
+  .code .b{color:#c98aff}
+  @media(max-width:480px){.code{font-size:12px;padding:16px}}
+
+  /* ---- section frame ---- */
+  section{padding:66px 0}
+  .sec-head{margin-bottom:40px}
+  .sec-tag{font-family:var(--mono);font-size:12.5px;color:var(--gold);letter-spacing:.1em;text-transform:uppercase}
+  html[dir="rtl"] .sec-tag{letter-spacing:normal}
+  .sec-title{font-family:var(--display);font-size:clamp(26px,3.4vw,36px);font-weight:700;margin-top:10px;letter-spacing:-.01em}
+  html[dir="rtl"] .sec-title{font-weight:800}
+
+  /* ---- services ---- */
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+  @media(max-width:680px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:26px 24px;
+    transition:border-color .25s,transform .25s;position:relative}
+  .card:hover{border-color:rgba(224,178,82,.4);transform:translateY(-3px)}
+  .card .ix{font-family:var(--mono);font-size:12px;color:var(--code-punc)}
+  .card h3{font-family:var(--display);font-size:20px;margin:14px 0 8px;font-weight:600}
+  html[dir="rtl"] .card h3{font-weight:700;font-family:'Tajawal',sans-serif}
+  .card p{color:var(--muted);font-size:15px}
+
+  /* ---- work / portfolio ---- */
+  .work{display:grid;grid-template-columns:1.1fr 1fr;gap:0;border:1px solid var(--line);
+    border-radius:18px;overflow:hidden;background:var(--ink-2)}
+  @media(max-width:780px){.work{grid-template-columns:1fr}}
+  .work .panel-img{background:linear-gradient(135deg,#292D65,#1c1f47);position:relative;
+    min-height:300px;display:flex;align-items:center;justify-content:center;padding:30px}
+  .gem{font-family:var(--display);text-align:center}
+  .gem .ar{font-family:'Tajawal',sans-serif;font-weight:800;font-size:44px;color:#C19E53;line-height:1.2}
+  .gem .en{font-family:var(--mono);font-size:12px;letter-spacing:.3em;color:rgba(255,255,255,.55);margin-top:10px;text-transform:uppercase}
+  .gem .ring{width:120px;height:120px;border:2px solid rgba(193,158,83,.5);border-radius:50%;
+    margin:0 auto 22px;position:relative}
+  .gem .ring::after{content:"";position:absolute;inset:14px;border:1px solid rgba(193,158,83,.3);border-radius:50%}
+  .work .panel-txt{padding:34px 32px}
+  .badge{display:inline-block;font-family:var(--mono);font-size:11.5px;color:var(--mint);
+    border:1px solid var(--line);border-radius:999px;padding:5px 12px;margin-bottom:18px}
+  .work h3{font-family:var(--display);font-size:25px;font-weight:700;margin-bottom:6px}
+  html[dir="rtl"] .work h3{font-weight:800;font-family:'Tajawal',sans-serif}
+  .work .sub{color:var(--gold);font-size:14px;margin-bottom:16px;font-family:var(--mono)}
+  .work p{color:var(--muted);font-size:15px;margin-bottom:22px}
+  .stack{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{font-family:var(--mono);font-size:12px;color:var(--muted);background:rgba(127,209,185,.06);
+    border:1px solid var(--line);border-radius:7px;padding:5px 11px}
+
+  /* ---- contact ---- */
+  .contact{text-align:center;border-top:1px solid var(--line);margin-top:20px}
+  .contact .sec-title{margin-bottom:14px}
+  .contact p{color:var(--muted);max-width:48ch;margin:0 auto 30px}
+  .links{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+
+  footer{border-top:1px solid var(--line);padding:26px 0;margin-top:30px}
+  .foot{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:12.5px;color:var(--code-punc)}
+
+  :focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:4px}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto}}
+
+  [data-en]{display:none}
+  html[dir="ltr"] [data-ar]{display:none}
+  html[dir="ltr"] [data-en]{display:revert}
+</style>
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="#top"><span class="dot"></span><b>ali</b><span>-dev</span></a>
+    <nav class="nav">
+      <a class="link" href="#services" data-ar>الخدمات</a><a class="link" href="#services" data-en>Services</a>
+      <a class="link" href="#work" data-ar>الأعمال</a><a class="link" href="#work" data-en>Work</a>
+      <a class="link" href="#contact" data-ar>تواصل</a><a class="link" href="#contact" data-en>Contact</a>
+      <button class="langtoggle" id="lang" aria-label="Switch language">EN</button>
+    </nav>
+  </div>
+</header>
+
+<a id="top"></a>
+<main class="wrap">
+
+  <!-- HERO -->
+  <section class="hero" style="padding-top:84px">
+    <div>
+      <span class="eyebrow" data-ar>شريك مطوّر معتمد · سلة</span>
+      <span class="eyebrow" data-en>Certified Salla Partner · Developer</span>
+
+      <h1 data-ar>ثيمات وتطبيقات <span class="accent">سلة</span><br>مبنيّة باحتراف.</h1>
+      <h1 data-en>Salla themes & apps,<br><span class="accent">built right.</span></h1>
+
+      <p class="lede" data-ar>أصمّم وأطوّر ثيمات Twilight وتطبيقات مخصّصة لمتاجر سلة — بأداء عالٍ ودعم كامل للّغة العربية واتجاه RTL.</p>
+      <p class="lede" data-en>I design and build custom Twilight themes and apps for Salla merchants — fast, polished, and Arabic/RTL-first.</p>
+
+      <div class="cta">
+        <a class="btn btn-gold" href="#contact"><span data-ar>ابدأ مشروعك</span><span data-en>Start a project</span> →</a>
+        <a class="btn btn-ghost" href="#work"><span data-ar>شاهد الأعمال</span><span data-en>See the work</span></a>
+      </div>
+    </div>
+
+    <!-- SIGNATURE: theme manifest -->
+    <div class="manifest" aria-hidden="true">
+      <div class="top">
+        <i class="dot-r"></i><i class="dot-y"></i><i class="dot-g"></i>
+        <span class="fname">twilight.json</span>
+      </div>
+<div class="code"><span class="p">{</span>
+  <span class="k">"developer"</span><span class="p">:</span> <span class="s">"ali-dev"</span><span class="p">,</span>
+  <span class="k">"platform"</span><span class="p">:</span> <span class="s">"Salla · Twilight"</span><span class="p">,</span>
+  <span class="k">"builds"</span><span class="p">:</span> <span class="p">[</span><span class="s">"themes"</span><span class="p">,</span> <span class="s">"apps"</span><span class="p">,</span> <span class="s">"integrations"</span><span class="p">]</span><span class="p">,</span>
+  <span class="k">"languages"</span><span class="p">:</span> <span class="p">[</span><span class="s">"ar"</span><span class="p">,</span> <span class="s">"en"</span><span class="p">]</span><span class="p">,</span>
+  <span class="k">"rtl"</span><span class="p">:</span> <span class="b">true</span><span class="p">,</span>
+  <span class="k">"status"</span><span class="p">:</span> <span class="s">"available"</span>
+<span class="p">}</span></div>
+    </div>
+  </section>
+
+  <!-- SERVICES -->
+  <section id="services">
+    <div class="sec-head">
+      <div class="sec-tag" data-ar>الخدمات</div><div class="sec-tag" data-en>Services</div>
+      <h2 class="sec-title" data-ar>ما الذي أبنيه لمتجرك</h2>
+      <h2 class="sec-title" data-en>What I build for your store</h2>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="ix">01</div>
+        <h3 data-ar>ثيمات Twilight مخصّصة</h3><h3 data-en>Custom Twilight themes</h3>
+        <p data-ar>ثيمات سلة مبنية من الصفر أو مخصّصة على أساس theme-raed — هوية بصرية كاملة، خطوط عربية، وصفحات منتجات وأقسام مصمّمة.</p>
+        <p data-en>Salla themes built from scratch or tailored on theme-raed — full visual identity, Arabic fonts, custom product and category pages.</p>
+      </div>
+      <div class="card">
+        <div class="ix">02</div>
+        <h3 data-ar>تطبيقات سلة</h3><h3 data-en>Salla apps</h3>
+        <p data-ar>تطبيقات تتكامل مع واجهات سلة البرمجية (APIs &amp; Webhooks) لإضافة مزايا للمتجر وأتمتة العمليات.</p>
+        <p data-en>Apps that integrate with Salla's APIs and webhooks to add store features and automate operations.</p>
+      </div>
+      <div class="card">
+        <div class="ix">03</div>
+        <h3 data-ar>تخصيص المتجر</h3><h3 data-en>Store customization</h3>
+        <p data-ar>تعديل الألوان والخطوط والصفحة الرئيسية والأقسام عبر محرّر سلة أو الكود — لمطابقة علامتك التجارية بدقّة.</p>
+        <p data-en>Tuning colors, fonts, homepage and category layouts via the Salla editor or code — to match your brand exactly.</p>
+      </div>
+      <div class="card">
+        <div class="ix">04</div>
+        <h3 data-ar>الأداء ودعم العربية</h3><h3 data-en>Performance &amp; RTL</h3>
+        <p data-ar>سرعة تحميل، خطوط مستضافة ذاتيًا، واتجاه RTL سليم — تجربة عربية أولًا على كل الأجهزة.</p>
+        <p data-en>Fast loads, self-hosted fonts, and correct RTL — an Arabic-first experience across every device.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORK -->
+  <section id="work">
+    <div class="sec-head">
+      <div class="sec-tag" data-ar>عمل مختار</div><div class="sec-tag" data-en>Selected work</div>
+      <h2 class="sec-title" data-ar>متجر حقيقي على أرض الواقع</h2>
+      <h2 class="sec-title" data-en>A real store, shipped</h2>
+    </div>
+    <div class="work">
+      <div class="panel-img">
+        <div class="gem">
+          <div class="ring"></div>
+          <div class="ar">سبح هجر</div>
+          <div class="en">HJR GEMS</div>
+        </div>
+      </div>
+      <div class="panel-txt">
+        <span class="badge" data-ar>ثيم Twilight مخصّص</span><span class="badge" data-en>Custom Twilight theme</span>
+        <h3 data-ar>سبح هجر — Hjr Gems</h3><h3 data-en>Hjr Gems</h3>
+        <div class="sub">hjrgems.com</div>
+        <p data-ar>متجر سبح فاخرة، عربي أولًا. ثيم مخصّص بهوية بصرية كحلي وذهبي، خط Nassim العربي مستضاف ذاتيًا، صفحة رئيسية مبنية بالكود (أقسام حسب الخامة، فلاتر الحجم وعدد الخرز)، وصفحات أقسام بأزرار صور للفئات الفرعية.</p>
+        <p data-en>A luxury Arabic prayer-beads store. Custom navy/gold identity, self-hosted Nassim Arabic font, a code-driven homepage (shop-by-material, size & bead-count facets), and category pages with sub-category image buttons.</p>
+        <div class="stack">
+          <span class="chip">Twilight</span><span class="chip">Twig</span><span class="chip">SCSS</span>
+          <span class="chip">RTL</span><span class="chip">Salla CLI</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact" class="contact">
+    <div class="sec-tag" data-ar>تواصل</div><div class="sec-tag" data-en>Contact</div>
+    <h2 class="sec-title" data-ar>عندك متجر على سلة؟ لنبنِه معًا.</h2>
+    <h2 class="sec-title" data-en>Got a Salla store? Let's build it.</h2>
+    <p data-ar>متاح لمشاريع ثيمات وتطبيقات سلة. راسلني وأرجع لك بسرعة.</p>
+    <p data-en>Available for Salla theme & app projects. Send a message and I'll get back to you quickly.</p>
+    <div class="links">
+      <a class="btn btn-gold" href="mailto:ali.bukhamseen.ab@gmail.com">✉ ali.bukhamseen.ab@gmail.com</a>
+      <a class="btn btn-ghost" href="https://github.com/alibu50" target="_blank" rel="noopener">GitHub · alibu50</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span>© <span id="yr"></span> ali-dev</span>
+    <span data-ar>شريك مطوّر · سلة</span><span data-en>Salla Partner · Developer</span>
+  </div>
+</footer>
+
+<script>
+  document.getElementById('yr').textContent = new Date().getFullYear();
+  var html = document.documentElement;
+  var btn = document.getElementById('lang');
+  function setLang(lang){
+    if(lang === 'en'){ html.lang='en'; html.dir='ltr'; btn.textContent='ع'; }
+    else { html.lang='ar'; html.dir='rtl'; btn.textContent='EN'; }
+    try{ localStorage.setItem('lang', lang); }catch(e){}
+  }
+  btn.addEventListener('click', function(){
+    setLang(html.dir === 'rtl' ? 'en' : 'ar');
+  });
+  try{ var saved = localStorage.getItem('lang'); if(saved) setLang(saved); }catch(e){}
+</script>
+</body>
+</html>
