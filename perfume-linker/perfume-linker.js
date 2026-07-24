@@ -44,11 +44,23 @@
     if (CONFIG.debug) console.log.apply(console, ['[perfume-linker]'].concat([].slice.call(arguments)));
   }
 
+  // Multi-language App Settings come back as an object, e.g. { ar: '...', en: '...' }.
+  // Resolve to a plain string using the STORE's active language
+  // (salla.config.get('language_code')) — not the shopper's device locale.
+  function localize(v) {
+    if (v && typeof v === 'object') {
+      var lang = (window.salla && salla.config && salla.config.get('language_code', 'ar')) || 'ar';
+      return v[lang] || v.ar || v.en || '';
+    }
+    return v;
+  }
+
   // Read a merchant-configured App Setting (public fields only) with a fallback.
   // Salla exposes public settings on the storefront as salla.config.get('app.<id>').
   function setting(key, fallback) {
     try {
       var v = window.salla && salla.config && salla.config.get('app.' + key, '');
+      v = localize(v);
       if (v === undefined || v === null || v === '') return fallback;
       return v;
     } catch (e) { return fallback; }
