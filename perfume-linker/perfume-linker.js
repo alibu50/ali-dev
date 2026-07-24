@@ -33,7 +33,7 @@
     popupSubtitle: 'نفس القطعة متوفرة بخيارات ومقاسات أخرى — ألقِ نظرة:',
     exitIntent: true,
     exitCooldownHours: 24,
-    preferWebComponent: true,    // try salla-products-list first on real themes
+    couponCode: '',
     anchorSelector: null
   }, window.PerfumeLinkerConfig || {});
 
@@ -41,6 +41,39 @@
 
   function log() {
     if (CONFIG.debug) console.log.apply(console, ['[perfume-linker]'].concat([].slice.call(arguments)));
+  }
+
+  // Read a merchant-configured App Setting (public fields only) with a fallback.
+  // Salla exposes public settings on the storefront as salla.config.get('app.<id>').
+  function setting(key, fallback) {
+    try {
+      var v = window.salla && salla.config && salla.config.get('app.' + key, '');
+      if (v === undefined || v === null || v === '') return fallback;
+      return v;
+    } catch (e) { return fallback; }
+  }
+
+  function settingBool(key, fallback) {
+    var v = setting(key, null);
+    if (v === null) return fallback;
+    return v === true || v === '1' || v === 1 || v === 'true';
+  }
+
+  // Merge merchant App Settings over the defaults (explicit window config wins,
+  // so the local demo still overrides everything).
+  function applyMerchantSettings() {
+    if (window.PerfumeLinkerConfig) return; // demo/local config takes precedence
+    CONFIG.title = setting('widget_title', CONFIG.title);
+    CONFIG.popupTitle = setting('popup_title', CONFIG.popupTitle);
+    CONFIG.popupSubtitle = setting('popup_subtitle', CONFIG.popupSubtitle);
+    CONFIG.exitIntent = settingBool('exit_popup_enabled', CONFIG.exitIntent);
+    CONFIG.couponCode = setting('coupon_code', CONFIG.couponCode);
+    CONFIG.anchorSelector = setting('placement_selector', CONFIG.anchorSelector) || null;
+    var cd = parseInt(setting('popup_cooldown_hours', ''), 10);
+    if (!isNaN(cd)) CONFIG.exitCooldownHours = cd;
+    var lim = parseInt(setting('products_limit', ''), 10);
+    if (!isNaN(lim)) CONFIG.limit = lim;
+    if (settingBool('widget_enabled', true) === false) CONFIG.disabled = true;
   }
 
   /* ---------- data ---------- */
@@ -261,6 +294,26 @@
     card.appendChild(close);
     card.appendChild(h);
     card.appendChild(p);
+
+    // Optional merchant coupon: click-to-copy chip
+    if (CONFIG.couponCode) {
+      var coupon = document.createElement('button');
+      coupon.type = 'button';
+      coupon.style.cssText = 'display:inline-flex;align-items:center;gap:8px;margin:0 0 16px;padding:8px 14px;border:1px dashed #0a7d4f;border-radius:10px;background:#f0fbf6;color:#0a7d4f;font-weight:800;cursor:pointer;font-size:.95rem;';
+      var codeSpan = document.createElement('span');
+      codeSpan.textContent = 'كوبون: ' + CONFIG.couponCode;
+      var hint = document.createElement('span');
+      hint.textContent = '📋 نسخ';
+      hint.style.cssText = 'font-weight:600;opacity:.7;font-size:.8rem;';
+      coupon.appendChild(codeSpan);
+      coupon.appendChild(hint);
+      coupon.onclick = function () {
+        try { navigator.clipboard.writeText(CONFIG.couponCode); } catch (e) {}
+        hint.textContent = '✓ تم النسخ';
+      };
+      card.appendChild(coupon);
+    }
+
     renderProducts(card, products);
     overlay.appendChild(card);
 
@@ -309,6 +362,8 @@
   // The theme renders tag links client-side, so the DOM may not have them yet
   // at first paint. Poll briefly until tag links (or the demo sourceValue) exist.
   function boot() {
+    applyMerchantSettings();
+    if (CONFIG.disabled) { log('widget disabled by merchant setting'); return; }
     if (document.getElementById('perfume-linker-strip')) return;
     var haveData = (CONFIG.sourceValue && CONFIG.sourceValue.length) ||
       (CONFIG.tagIds && CONFIG.tagIds.length) ||
