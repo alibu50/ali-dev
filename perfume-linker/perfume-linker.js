@@ -283,14 +283,23 @@
 
   /* ---------- boot ---------- */
 
-  function run() {
+  function run(attempt) {
+    attempt = attempt || 0;
     if (!isProductPage()) { log('not a product page — skipping'); return; }
+    if (document.getElementById('perfume-linker-strip')) return;
     resolveSiblings().then(function (products) {
-      log('resolved', products.length, 'sibling products');
-      if (!products.length) return;
+      log('resolved', products.length, 'sibling products (attempt ' + attempt + ')');
+      if (!products.length) {
+        // Newly-created products lag Salla's storefront search index; retry.
+        if (attempt < 6) setTimeout(function () { run(attempt + 1); }, 2000);
+        return;
+      }
       renderStrip(products);
       armExitIntent(products);
-    }).catch(function (e) { log('failed:', e); });
+    }).catch(function (e) {
+      log('failed:', e);
+      if (attempt < 6) setTimeout(function () { run(attempt + 1); }, 2000);
+    });
   }
 
   // The theme renders tag links client-side, so the DOM may not have them yet
