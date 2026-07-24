@@ -17,7 +17,7 @@
 
   var CONFIG = Object.assign({
     storeId: null,               // required outside a real storefront
-    backendBase: 'https://accounting-builds-touched-entered.trycloudflare.com', // config source (embedded dashboard); swap for Vercel URL in prod
+    backendBase: 'https://lynn-california-ancient-apparel.trycloudflare.com', // config source (embedded dashboard); swap for Vercel URL in prod
     apiBase: 'https://api.salla.dev/store/v1',
 
     // 'tags'    → source-value is [tagId] (production mode)
@@ -30,6 +30,7 @@
 
     limit: 8,
     title: 'متوفر أيضاً بمقاسات وخيارات أخرى',
+    subtitle: 'اختر المقاس أو النوع الأنسب لك',
     popupTitle: 'قبل أن تغادر…',
     popupSubtitle: 'نفس القطعة متوفرة بخيارات ومقاسات أخرى — ألقِ نظرة:',
     exitIntent: true,
@@ -200,37 +201,122 @@
 
   /* ---------- renderers ---------- */
 
-  function money(p) {
-    var cur = p.currency || 'SAR';
-    if (p.sale_price) {
-      return '<span style="color:#0a7d4f;font-weight:800">' + p.sale_price + ' ' + cur + '</span> ' +
-             '<s style="opacity:.5;font-size:.85em">' + p.price + ' ' + cur + '</s>';
-    }
-    return '<span style="font-weight:800">' + p.price + ' ' + cur + '</span>';
-  }
-
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
     });
   }
 
+  // Fragrance-droplet mark — the signature accent tying the section to perfume.
+  var DROP_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.2s6.4 6.8 6.4 11.4a6.4 6.4 0 1 1-12.8 0C5.6 9 12 2.2 12 2.2z"/></svg>';
+
+  // Self-contained theme, injected once. Namespaced so it can't leak into the store.
+  var STYLE_ID = 'pl-styles';
+  function injectStyles() {
+    if (document.getElementById(STYLE_ID)) return;
+    var css = [
+      '#perfume-linker-strip,#perfume-linker-popup{',
+        '--pl-ink:#241c15;--pl-muted:#8c8177;--pl-line:rgba(36,28,21,.10);',
+        '--pl-accent:#b06a30;--pl-accent-ink:#8a4f21;--pl-accent-soft:#f6ecdf;',
+        'font-family:inherit;-webkit-font-smoothing:antialiased;box-sizing:border-box}',
+      '#perfume-linker-strip *,#perfume-linker-popup *{box-sizing:border-box}',
+      '.pl-panel{margin:26px auto;max-width:1180px;background:linear-gradient(180deg,#fbf7f1,#fff 44%);',
+        'border:1px solid var(--pl-line);border-radius:18px;padding:20px 20px 22px;position:relative;overflow:hidden}',
+      '.pl-panel::before{content:"";position:absolute;inset-block-start:0;inset-inline:0;height:3px;',
+        'background:linear-gradient(90deg,var(--pl-accent),#e3b98c)}',
+      '.pl-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:.72rem;font-weight:800;',
+        'color:var(--pl-accent-ink);background:var(--pl-accent-soft);padding:5px 11px;border-radius:999px;margin:0 0 11px}',
+      '.pl-eyebrow svg{width:13px;height:13px;flex:none}',
+      '.pl-title{margin:0;font-size:1.15rem;font-weight:800;color:var(--pl-ink);line-height:1.35}',
+      '.pl-sub{margin:5px 0 0;font-size:.86rem;color:var(--pl-muted)}',
+      '.pl-row{display:flex;gap:12px;overflow-x:auto;padding:16px 2px 6px;scrollbar-width:thin;scroll-snap-type:x proximity}',
+      '.pl-row::-webkit-scrollbar{height:6px}.pl-row::-webkit-scrollbar-thumb{background:var(--pl-line);border-radius:99px}',
+      '.pl-card{flex:0 0 170px;scroll-snap-align:start;text-decoration:none;color:inherit;background:#fff;',
+        'border:1px solid var(--pl-line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;',
+        'transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;opacity:0}',
+      '.pl-card:hover{transform:translateY(-4px);box-shadow:0 12px 26px rgba(36,28,21,.14);border-color:rgba(176,106,48,.42)}',
+      '.pl-card:focus-visible{outline:2px solid var(--pl-accent);outline-offset:2px}',
+      '.pl-thumb{position:relative;aspect-ratio:1;background:#f2ede6 center/cover no-repeat}',
+      '.pl-thumb::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.30),transparent 44%)}',
+      '.pl-badge{position:absolute;inset-block-start:8px;inset-inline-start:8px;z-index:1;font-size:.68rem;font-weight:800;',
+        'color:#fff;background:rgba(36,28,21,.62);padding:3px 9px;border-radius:999px}',
+      '.pl-oos{position:absolute;inset:0;display:grid;place-items:center;z-index:1;background:rgba(255,255,255,.68);',
+        'font-size:.78rem;font-weight:800;color:#8a2b22}',
+      '.pl-body{padding:11px 12px 13px;display:flex;flex-direction:column;gap:7px;flex:1}',
+      '.pl-name{font-size:.85rem;line-height:1.45;color:var(--pl-ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}',
+      '.pl-price{margin-top:auto;font-size:.92rem;font-weight:800;color:var(--pl-ink)}',
+      '.pl-price.pl-sale{color:var(--pl-accent-ink)}',
+      '.pl-price .pl-was{font-weight:600;font-size:.8em;color:var(--pl-muted);text-decoration:line-through;margin-inline-start:5px}',
+      '@keyframes pl-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}',
+      '.pl-anim{animation:pl-in .45s ease forwards}',
+      '#perfume-linker-popup{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;',
+        'padding:16px;background:rgba(28,20,14,.55);animation:pl-fade .2s ease}',
+      '@keyframes pl-fade{from{opacity:0}to{opacity:1}}',
+      '.pl-modal{position:relative;width:100%;max-width:720px;max-height:86vh;overflow:auto;background:#fff;border-radius:20px;',
+        'padding:26px 22px 22px;box-shadow:0 30px 70px rgba(28,20,14,.4);animation:pl-pop .28s cubic-bezier(.2,.8,.3,1)}',
+      '@keyframes pl-pop{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}',
+      '.pl-modal::before{content:"";position:absolute;inset-block-start:0;inset-inline:0;height:4px;',
+        'background:linear-gradient(90deg,var(--pl-accent),#e3b98c)}',
+      '.pl-x{position:absolute;inset-block-start:14px;inset-inline-end:14px;border:0;background:#f4efe8;color:var(--pl-ink);',
+        'width:32px;height:32px;border-radius:50%;font-size:15px;cursor:pointer;line-height:1}',
+      '.pl-x:hover{background:#eae2d7}',
+      '.pl-ptitle{margin:2px 0 4px;font-size:1.3rem;font-weight:800;color:var(--pl-ink);padding-inline-end:42px}',
+      '.pl-psub{margin:0 0 16px;font-size:.9rem;color:var(--pl-muted)}',
+      '.pl-coupon{display:inline-flex;align-items:center;gap:9px;margin:0 0 16px;padding:9px 14px;cursor:pointer;',
+        'border:1px dashed var(--pl-accent);border-radius:12px;background:var(--pl-accent-soft);color:var(--pl-accent-ink);font-weight:800;font-size:.92rem}',
+      '.pl-cp-hint{font-weight:600;font-size:.78rem;opacity:.75}',
+      '@media (max-width:520px){.pl-card{flex-basis:150px}}',
+      '@media (prefers-reduced-motion:reduce){.pl-card,.pl-anim,#perfume-linker-popup,.pl-modal{animation:none!important;opacity:1!important}}'
+    ].join('');
+    var st = document.createElement('style');
+    st.id = STYLE_ID;
+    st.textContent = css;
+    (document.head || document.documentElement).appendChild(st);
+  }
+
+  // Turn "duplicate listings" into an explicit format choice — the app's core value.
+  function formatLabel(name) {
+    var n = String(name || '');
+    if (/تستر|tester/i.test(n)) return 'تستر';
+    if (/تقسيم|decant/i.test(n)) {
+      var m = n.match(/(\d+(?:[.,]\d+)?)\s*مل/);
+      return m ? ('تقسيم · ' + m[1] + ' مل') : 'تقسيم';
+    }
+    if (/عينة|sample/i.test(n)) return 'عينة';
+    if (/بديل|كلون|clone/i.test(n)) return 'بديل';
+    if (/عبوة|كامل|(^|\s)عطر\s/.test(n)) return 'عبوة كاملة';
+    return '';
+  }
+
+  function priceHtml(p) {
+    var cur = p.currency || 'SAR';
+    var unit = cur === 'SAR' ? 'ر.س' : cur;
+    if (p.sale_price) {
+      return '<span class="pl-price pl-sale">' + esc(p.sale_price) + ' ' + unit +
+        '<span class="pl-was">' + esc(p.price) + ' ' + unit + '</span></span>';
+    }
+    return '<span class="pl-price">' + esc(p.price) + ' ' + unit + '</span>';
+  }
+
   function renderCards(container, products) {
+    injectStyles();
     var row = document.createElement('div');
-    row.style.cssText = 'display:flex;gap:12px;overflow-x:auto;padding:4px 0;scrollbar-width:thin;';
-    products.slice(0, CONFIG.limit).forEach(function (p) {
+    row.className = 'pl-row';
+    products.slice(0, CONFIG.limit).forEach(function (p, i) {
       var a = document.createElement('a');
+      a.className = 'pl-card pl-anim';
       a.href = p.url;
-      a.style.cssText = 'flex:0 0 168px;text-decoration:none;color:inherit;background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:12px;overflow:hidden;transition:box-shadow .15s;';
-      a.onmouseenter = function () { a.style.boxShadow = '0 6px 20px rgba(0,0,0,.12)'; };
-      a.onmouseleave = function () { a.style.boxShadow = 'none'; };
-      var img = (p.image && p.image.url) || (p.original_image) || '';
+      a.style.animationDelay = (i * 55) + 'ms';
+      var img = (p.image && p.image.url) || p.original_image || '';
+      var badge = formatLabel(p.name);
       a.innerHTML =
-        '<div style="aspect-ratio:1;background:#f2efe9 url(' + esc(img) + ') center/cover no-repeat"></div>' +
-        '<div style="padding:10px 12px">' +
-          '<div style="font-size:.85rem;line-height:1.4;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">' + esc(p.name) + '</div>' +
-          '<div style="font-size:.9rem">' + money(p) + '</div>' +
-          (p.is_out_of_stock ? '<div style="font-size:.75rem;color:#b3261e;margin-top:4px">غير متوفر حالياً</div>' : '') +
+        '<div class="pl-thumb" style="background-image:url(' + esc(img) + ')">' +
+          (badge ? '<span class="pl-badge">' + esc(badge) + '</span>' : '') +
+          (p.is_out_of_stock ? '<span class="pl-oos">غير متوفر</span>' : '') +
+        '</div>' +
+        '<div class="pl-body">' +
+          '<div class="pl-name">' + esc(p.name) + '</div>' +
+          priceHtml(p) +
         '</div>';
       row.appendChild(a);
     });
@@ -275,14 +361,15 @@
 
   function renderStrip(products) {
     if (document.getElementById('perfume-linker-strip')) return;
+    injectStyles();
     var wrap = document.createElement('section');
     wrap.id = 'perfume-linker-strip';
+    wrap.className = 'pl-panel';
     wrap.setAttribute('dir', 'rtl');
-    wrap.style.cssText = 'margin:24px auto;padding:16px;border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;max-width:1200px;';
-    var h = document.createElement('h3');
-    h.textContent = CONFIG.title;
-    h.style.cssText = 'margin:0 0 12px;font-size:1.05rem;font-weight:700;';
-    wrap.appendChild(h);
+    wrap.innerHTML =
+      '<span class="pl-eyebrow">' + DROP_ICON + 'نفس العطر · إصدارات أخرى</span>' +
+      '<h3 class="pl-title">' + esc(CONFIG.title) + '</h3>' +
+      (CONFIG.subtitle ? '<p class="pl-sub">' + esc(CONFIG.subtitle) + '</p>' : '');
     renderProducts(wrap, products);
     var anchor = findAnchor();
     if (anchor.mode === 'append') {
@@ -312,26 +399,26 @@
     if (document.getElementById('perfume-linker-popup') || cooldownActive()) return;
     markShown();
 
+    injectStyles();
     var overlay = document.createElement('div');
     overlay.id = 'perfume-linker-popup';
     overlay.setAttribute('dir', 'rtl');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;';
 
     var card = document.createElement('div');
-    card.style.cssText = 'background:#fff;color:#111;max-width:760px;width:100%;max-height:85vh;overflow:auto;border-radius:16px;padding:24px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.3);';
+    card.className = 'pl-modal';
 
     var close = document.createElement('button');
+    close.className = 'pl-x';
     close.textContent = '✕';
     close.setAttribute('aria-label', 'إغلاق');
-    close.style.cssText = 'position:absolute;top:12px;inset-inline-start:12px;border:0;background:transparent;font-size:20px;cursor:pointer;';
     close.onclick = function () { overlay.remove(); };
 
     var h = document.createElement('h3');
+    h.className = 'pl-ptitle';
     h.textContent = CONFIG.popupTitle;
-    h.style.cssText = 'margin:0 0 4px;font-size:1.3rem;font-weight:800;';
     var p = document.createElement('p');
+    p.className = 'pl-psub';
     p.textContent = CONFIG.popupSubtitle;
-    p.style.cssText = 'margin:0 0 16px;opacity:.75;';
 
     card.appendChild(close);
     card.appendChild(h);
@@ -341,12 +428,12 @@
     if (CONFIG.couponCode) {
       var coupon = document.createElement('button');
       coupon.type = 'button';
-      coupon.style.cssText = 'display:inline-flex;align-items:center;gap:8px;margin:0 0 16px;padding:8px 14px;border:1px dashed #0a7d4f;border-radius:10px;background:#f0fbf6;color:#0a7d4f;font-weight:800;cursor:pointer;font-size:.95rem;';
+      coupon.className = 'pl-coupon';
       var codeSpan = document.createElement('span');
       codeSpan.textContent = 'كوبون: ' + CONFIG.couponCode;
       var hint = document.createElement('span');
-      hint.textContent = '📋 نسخ';
-      hint.style.cssText = 'font-weight:600;opacity:.7;font-size:.8rem;';
+      hint.className = 'pl-cp-hint';
+      hint.textContent = 'نسخ';
       coupon.appendChild(codeSpan);
       coupon.appendChild(hint);
       coupon.onclick = function () {
@@ -425,6 +512,12 @@
         run();
       }
     }, 200);
+  }
+
+  // Debug-only hooks for local theme previews (no effect in production).
+  if (CONFIG.debug) {
+    window.__plRenderStrip = renderStrip;
+    window.__plShowPopup = showPopup;
   }
 
   if (document.readyState === 'loading') {
