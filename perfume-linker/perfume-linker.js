@@ -17,6 +17,7 @@
 
   var CONFIG = Object.assign({
     storeId: null,               // required outside a real storefront
+    backendBase: 'https://accounting-builds-touched-entered.trycloudflare.com', // config source (embedded dashboard); swap for Vercel URL in prod
     apiBase: 'https://api.salla.dev/store/v1',
 
     // 'tags'    → source-value is [tagId] (production mode)
@@ -74,6 +75,35 @@
     var lim = parseInt(setting('products_limit', ''), 10);
     if (!isNaN(lim)) CONFIG.limit = lim;
     if (settingBool('widget_enabled', true) === false) CONFIG.disabled = true;
+  }
+
+  // Preferred config source: our backend (driven by the embedded dashboard).
+  // Falls back silently to native App Settings / defaults if unreachable.
+  function fetchBackendConfig() {
+    if (window.PerfumeLinkerConfig) return Promise.resolve(); // demo/local wins
+    if (!CONFIG.backendBase) return Promise.resolve();
+    var sid = storeId();
+    if (!sid) return Promise.resolve();
+    return fetch(CONFIG.backendBase + '/api/config?store=' + encodeURIComponent(sid))
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (cfg) {
+        if (!cfg || cfg.active === false) return;
+        var w = cfg.widget || {}, p = cfg.popup || {};
+        if (w.enabled === false) CONFIG.disabled = true;
+        if (w.title) CONFIG.title = w.title;
+        if (w.limit) CONFIG.limit = w.limit;
+        if (w.placement === 'after_description') CONFIG.anchorSelector = '.product-details, .product__description';
+        else if (w.placement === 'custom' && cfg.widget.placementSelector) CONFIG.anchorSelector = cfg.widget.placementSelector;
+        CONFIG.exitIntent = p.enabled !== false;
+        if (p.title) CONFIG.popupTitle = p.title;
+        if (p.subtitle) CONFIG.popupSubtitle = p.subtitle;
+        if (p.template) CONFIG.popupTemplate = p.template;
+        if (typeof p.cooldownHours === 'number') CONFIG.exitCooldownHours = p.cooldownHours;
+        CONFIG.couponCode = p.coupon || CONFIG.couponCode;
+        CONFIG.rows = cfg.rows || [];
+        log('backend config applied', cfg);
+      })
+      .catch(function (e) { log('backend config unreachable, using fallback', e); });
   }
 
   /* ---------- data ---------- */
@@ -362,7 +392,14 @@
   // The theme renders tag links client-side, so the DOM may not have them yet
   // at first paint. Poll briefly until tag links (or the demo sourceValue) exist.
   function boot() {
-    applyMerchantSettings();
+    // Backend (dashboard) config first, then native App Settings, then defaults.
+    fetchBackendConfig().then(function () {
+      applyMerchantSettings();
+      bootAfterConfig();
+    });
+  }
+
+  function bootAfterConfig() {
     if (CONFIG.disabled) { log('widget disabled by merchant setting'); return; }
     if (document.getElementById('perfume-linker-strip')) return;
     var haveData = (CONFIG.sourceValue && CONFIG.sourceValue.length) ||
