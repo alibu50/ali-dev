@@ -170,12 +170,32 @@
 
   /* ---------- inline strip ---------- */
 
+  // Returns { el, mode } — mode 'after' inserts as a sibling right after el,
+  // 'append' adds the strip as el's last child. Ordered from most to least
+  // specific; deliberately excludes <body>/<html> so the strip can never land
+  // below the footer.
   function findAnchor() {
-    if (CONFIG.anchorSelector) return document.querySelector(CONFIG.anchorSelector);
-    return document.querySelector('salla-product-options')
-      || document.querySelector('.product-single, .product__description, [class*="product-details"]')
-      || document.querySelector('main')
-      || document.body;
+    if (CONFIG.anchorSelector) {
+      var custom = document.querySelector(CONFIG.anchorSelector);
+      if (custom) return { el: custom, mode: 'after' };
+    }
+    var afterSelectors = [
+      'salla-product-options',
+      '.product-form',
+      'salla-add-product-button',
+      '.product__price, .price-wrapper',
+      '.product-details, .product__description'
+    ];
+    for (var i = 0; i < afterSelectors.length; i++) {
+      var a = document.querySelector(afterSelectors[i]);
+      // skip matches that are the body/html element (some themes tag body)
+      if (a && a !== document.body && a !== document.documentElement) {
+        return { el: a, mode: 'after' };
+      }
+    }
+    var main = document.querySelector('main');
+    if (main) return { el: main, mode: 'append' };
+    return { el: document.body, mode: 'append' };
   }
 
   function renderStrip(products) {
@@ -183,15 +203,21 @@
     var wrap = document.createElement('section');
     wrap.id = 'perfume-linker-strip';
     wrap.setAttribute('dir', 'rtl');
-    wrap.style.cssText = 'margin:24px 0;padding:16px;border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;';
+    wrap.style.cssText = 'margin:24px auto;padding:16px;border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;max-width:1200px;';
     var h = document.createElement('h3');
     h.textContent = CONFIG.title;
     h.style.cssText = 'margin:0 0 12px;font-size:1.05rem;font-weight:700;';
     wrap.appendChild(h);
     renderProducts(wrap, products);
     var anchor = findAnchor();
-    (anchor.parentNode || document.body).insertBefore(wrap, anchor.nextSibling);
-    log('strip rendered with', products.length, 'products');
+    if (anchor.mode === 'append') {
+      anchor.el.appendChild(wrap);
+    } else if (anchor.el.parentNode) {
+      anchor.el.parentNode.insertBefore(wrap, anchor.el.nextSibling);
+    } else {
+      anchor.el.appendChild(wrap);
+    }
+    log('strip rendered with', products.length, 'products near', anchor.el.tagName, anchor.mode);
   }
 
   /* ---------- exit-intent popup ---------- */
