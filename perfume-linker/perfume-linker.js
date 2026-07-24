@@ -63,6 +63,19 @@
     }).then(function (j) { return j.data || []; });
   }
 
+  // Read this product's tag IDs from the tag links Salla renders on the page
+  // (storefront API exposes tag NAME but not ID; the theme's tag links carry
+  // the ID as .../<slug>/tag-<id>). This keeps the widget backend-free.
+  function tagIdsFromDom() {
+    var ids = {};
+    var links = document.querySelectorAll('a[href*="/tag-"]');
+    for (var i = 0; i < links.length; i++) {
+      var m = (links[i].getAttribute('href') || '').match(/\/tag-(\d+)/);
+      if (m) ids[m[1]] = true;
+    }
+    return Object.keys(ids);
+  }
+
   function resolveSiblings() {
     var current = currentProductId();
     if (CONFIG.sourceValue && CONFIG.sourceValue.length) {
@@ -74,16 +87,12 @@
         return list.filter(function (p) { return String(p.id) !== String(current); });
       });
     }
-    // Production path: read the current product's tags, then fetch by tag
-    if (!current) return Promise.resolve([]);
-    return fetchProducts('selected', [current]).then(function (list) {
-      var me = list[0];
-      var tags = (me && me.tags) || [];
-      if (!tags.length) return [];
-      var tagIds = tags.map(function (t) { return t.id; });
-      return fetchProducts('tags', tagIds).then(function (siblings) {
-        return siblings.filter(function (p) { return String(p.id) !== String(current); });
-      });
+    // Production path: tag IDs from the page → fetch products by tag
+    var tagIds = CONFIG.tagIds && CONFIG.tagIds.length ? CONFIG.tagIds : tagIdsFromDom();
+    if (!tagIds.length) { log('no tag links found on page'); return Promise.resolve([]); }
+    log('resolving by tag ids', tagIds);
+    return fetchProducts('tags', tagIds).then(function (siblings) {
+      return siblings.filter(function (p) { return String(p.id) !== String(current); });
     });
   }
 
@@ -274,7 +283,7 @@
 
   /* ---------- boot ---------- */
 
-  function boot() {
+  function run() {
     if (!isProductPage()) { log('not a product page — skipping'); return; }
     resolveSiblings().then(function (products) {
       log('resolved', products.length, 'sibling products');
@@ -282,6 +291,23 @@
       renderStrip(products);
       armExitIntent(products);
     }).catch(function (e) { log('failed:', e); });
+  }
+
+  // The theme renders tag links client-side, so the DOM may not have them yet
+  // at first paint. Poll briefly until tag links (or the demo sourceValue) exist.
+  function boot() {
+    if (document.getElementById('perfume-linker-strip')) return;
+    var haveData = (CONFIG.sourceValue && CONFIG.sourceValue.length) ||
+      (CONFIG.tagIds && CONFIG.tagIds.length) ||
+      tagIdsFromDom().length;
+    if (haveData) { run(); return; }
+    var tries = 0;
+    var t = setInterval(function () {
+      if (tagIdsFromDom().length || ++tries > 50) {
+        clearInterval(t);
+        run();
+      }
+    }, 200);
   }
 
   if (document.readyState === 'loading') {
