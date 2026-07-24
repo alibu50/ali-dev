@@ -1,0 +1,13 @@
+{
+  "settings": [
+    { "id": "widget_enabled", "type": "boolean", "label": "تفعيل عرض المنتجات المرتبطة", "value": true, "is_public": true, "required": false },
+    { "id": "widget_title", "type": "string", "label": "عنوان قسم المنتجات المرتبطة", "value": "متوفر أيضاً بمقاسات وخيارات أخرى", "is_public": true, "required": false },
+    { "id": "products_limit", "type": "number", "label": "أقصى عدد للمنتجات المعروضة", "value": 8, "is_public": true, "required": false },
+    { "id": "exit_popup_enabled", "type": "boolean", "label": "تفعيل نافذة الخروج المنبثقة", "value": true, "is_public": true, "required": false },
+    { "id": "popup_title", "type": "string", "label": "عنوان نافذة الخروج", "value": "قبل أن تغادر…", "is_public": true, "required": false },
+    { "id": "popup_subtitle", "type": "string", "label": "نص نافذة الخروج", "value": "نفس القطعة متوفرة بخيارات ومقاسات أخرى — ألقِ نظرة:", "is_public": true, "required": false },
+    { "id": "popup_cooldown_hours", "type": "number", "label": "المدة قبل إظهار النافذة مجدداً (ساعات)", "value": 24, "is_public": true, "required": false },
+    { "id": "coupon_code", "type": "string", "label": "كود خصم يظهر في النافذة (اختياري)", "value": "", "is_public": true, "required": false },
+    { "id": "placement_selector", "type": "string", "label": "محدد مكان العرض المخصص (CSS selector) — متقدم", "value": "", "is_public": true, "required": false }
+  ]
+}

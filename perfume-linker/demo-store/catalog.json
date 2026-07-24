@@ -1,0 +1,72 @@
+{
+  "reference": "https://otor200sa.com/ar/ (Salla store 45387497) — prices/images pulled 2026-07-24",
+  "categories": [
+    { "key": "full",    "name": "العطور الكاملة" },
+    { "key": "tester",  "name": "التسترات" },
+    { "key": "decant",  "name": "التقسيمات" },
+    { "key": "sample",  "name": "العينات" },
+    { "key": "clone",   "name": "البدائل" }
+  ],
+  "families": [
+    {
+      "tag": "xerjoff-don",
+      "title": "زيرجوف جوين ذا كلوب دون",
+      "brand": "Xerjoff",
+      "products": [
+        { "category": "full",   "name": "عطر زيرجوف جوين ذا كلوب دون 100 مل Don Xerjoff",  "price": 977.5, "source": "real",  "image": "https://cdn.salla.sa/WYXWz/S86PWwWjoKTPhIwhSkVyd2qkpvlC8HXbS7dZEn13.png" },
+        { "category": "tester", "name": "تستر زيرجوف جوين ذا كلوب دون 100 مل Don Xerjoff", "price": 897,   "source": "real",  "image": "https://cdn.salla.sa/WYXWz/hxGGFJ3OtqNErgmJg7hHaGBdXa1GKCW6zdGxwk2H.jpg" },
+        { "category": "decant", "name": "تقسيم زيرجوف جوين ذا كلوب دون 25 مل Don Xerjoff", "price": 331.2, "source": "real",  "image": "https://cdn.salla.sa/WYXWz/4QGnct8oIU6tv5HQvhF6BeL4uKPeC9qm2TAa53cS.png" },
+        { "category": "sample", "name": "عينة زيرجوف جوين ذا كلوب دون Don Xerjoff",        "price": 23,    "source": "real",  "image": "https://cdn.salla.sa/WYXWz/l3A8UZXvYcsuY9yuHIGc512AhsXQpRfnV3biaLZ1.png" },
+        { "category": "clone",  "name": "بديل زيرجوف جوين ذا كلوب دون 50 مل",              "price": 89,    "source": "synth", "image": "https://cdn.salla.sa/WYXWz/S86PWwWjoKTPhIwhSkVyd2qkpvlC8HXbS7dZEn13.png" }
+      ]
+    },
+    {
+      "tag": "min-dahab",
+      "title": "مين نيويورك دهب",
+      "brand": "MiN New York",
+      "products": [
+        { "category": "full",   "name": "عطر مين نيويورك دهب 75 مل Dahab MiN New York",  "price": 609.5, "source": "real",  "image": "https://cdn.salla.sa/WYXWz/QH8gDXB1f1MjlpRbH4U0BIZyHGiI48nROE5ODkpY.jpg" },
+        { "category": "tester", "name": "تستر مين نيويورك دهب 75 مل Dahab MiN New York", "price": 690,   "source": "real",  "image": "https://cdn.salla.sa/WYXWz/5FUqdTFZm6okJZD0FMr5vLfZYcdAqzsTKgh5M8ec.jpg" },
+        { "category": "decant", "name": "تقسيم مين نيويورك دهب 25 مل Dahab MiN New York","price": 230,   "source": "real",  "image": "https://cdn.salla.sa/WYXWz/MOPtRLHDhT80KYA2BioE6AtF88pCfhUyh02suR4p.jpg" },
+        { "category": "sample", "name": "عينة مين نيويورك دهب Dahab MiN New York",       "price": 18.4,  "source": "real",  "image": "https://cdn.salla.sa/WYXWz/RpMrrRNZGtSw8klg0JnNtcbcYQTYjHNaZrSHAjSl.jpg" },
+        { "category": "clone",  "name": "بديل مين نيويورك دهب 50 مل",                    "price": 79,    "source": "synth", "image": "https://cdn.salla.sa/WYXWz/QH8gDXB1f1MjlpRbH4U0BIZyHGiI48nROE5ODkpY.jpg" }
+      ]
+    },
+    {
+      "tag": "bvlgari-opalon",
+      "title": "بولغاري أوبالون",
+      "brand": "Bvlgari",
+      "products": [
+        { "category": "full",   "name": "عطر بولغاري أوبالون او دو بارفيوم 100 مل",  "price": 1035,  "source": "synth", "image": "https://cdn.salla.sa/WYXWz/bVr1JQl2d3HugZ5zmSrJpFI8iQEucxpS8OlB91nE.jpg" },
+        { "category": "tester", "name": "تستر بولغاري أوبالون او دو بارفيوم 100 مل", "price": 920,   "source": "synth", "image": "https://cdn.salla.sa/WYXWz/bVr1JQl2d3HugZ5zmSrJpFI8iQEucxpS8OlB91nE.jpg" },
+        { "category": "decant", "name": "تقسيم بولغاري أوبالون او دو بارفيوم 25 مل", "price": 368,   "source": "real",  "image": "https://cdn.salla.sa/WYXWz/bVr1JQl2d3HugZ5zmSrJpFI8iQEucxpS8OlB91nE.jpg" },
+        { "category": "sample", "name": "عينة بولغاري أوبالون او دو بارفيوم",        "price": 29.9,  "source": "real",  "image": "https://cdn.salla.sa/WYXWz/Huxg4bpiSE0oBuiomqdBzPi2WNMP1gOeus52J4PR.jpg" },
+        { "category": "clone",  "name": "بديل بولغاري أوبالون 50 مل",                "price": 99,    "source": "synth", "image": "https://cdn.salla.sa/WYXWz/bVr1JQl2d3HugZ5zmSrJpFI8iQEucxpS8OlB91nE.jpg" }
+      ]
+    },
+    {
+      "tag": "amado-seduction",
+      "title": "أمادو سيداكشن",
+      "brand": "Amado",
+      "products": [
+        { "category": "full",   "name": "عطر امادو سيداكشن 100 مل Seduction Amado",  "price": 517,   "source": "synth", "image": "https://cdn.salla.sa/WYXWz/S6GLZGIvYMArdt7RuZiYltvd9x6nFGkrEvZrhzP9.jpg" },
+        { "category": "tester", "name": "تستر امادو سيداكشن 100 مل Seduction Amado", "price": 460,   "source": "synth", "image": "https://cdn.salla.sa/WYXWz/S6GLZGIvYMArdt7RuZiYltvd9x6nFGkrEvZrhzP9.jpg" },
+        { "category": "decant", "name": "تقسيم امادو سيداكشن 25 مل Seduction Amado", "price": 172.5, "source": "real",  "image": "https://cdn.salla.sa/WYXWz/S6GLZGIvYMArdt7RuZiYltvd9x6nFGkrEvZrhzP9.jpg" },
+        { "category": "sample", "name": "عينة أمادو سيداكشن Seduction Amado",        "price": 19.55, "source": "real",  "image": "https://cdn.salla.sa/WYXWz/6xUIQrtjmF8xRdMdwmuAbauPERrjgXiMyq6EGKrO.jpg" },
+        { "category": "clone",  "name": "بديل امادو سيداكشن 50 مل",                  "price": 69,    "source": "synth", "image": "https://cdn.salla.sa/WYXWz/S6GLZGIvYMArdt7RuZiYltvd9x6nFGkrEvZrhzP9.jpg" }
+      ]
+    },
+    {
+      "tag": "akro-awake",
+      "title": "أكرو أويك",
+      "brand": "AKRO",
+      "products": [
+        { "category": "full",   "name": "عطر اكرو اويك 100 مل Awake AKRO",  "price": 490,   "source": "synth", "image": "https://cdn.salla.sa/WYXWz/7f7063d8-9612-41a1-8aba-e998e218bd79-500x500-ezm9t8P4uZM4hTF98c9hLVpoibcJtLeaZH7WZj9n.jpg" },
+        { "category": "tester", "name": "تستر اكرو اويك 100 مل Awake AKRO", "price": 430,   "source": "synth", "image": "https://cdn.salla.sa/WYXWz/7f7063d8-9612-41a1-8aba-e998e218bd79-500x500-ezm9t8P4uZM4hTF98c9hLVpoibcJtLeaZH7WZj9n.jpg" },
+        { "category": "decant", "name": "تقسيم اويك اكرو 25 مل",            "price": 172.5, "source": "real",  "image": "https://cdn.salla.sa/WYXWz/7f7063d8-9612-41a1-8aba-e998e218bd79-500x500-ezm9t8P4uZM4hTF98c9hLVpoibcJtLeaZH7WZj9n.jpg" },
+        { "category": "sample", "name": "عينة اويك اكرو",                   "price": 14.95, "source": "real",  "image": "https://cdn.salla.sa/WYXWz/59bc6b1d-a90a-42f9-8dd5-ad94a721d8d4-500x500-gtdjsvSIUeDCzCkcMHgw2PtF36VCSQTpUYF2gTjq.jpg" },
+        { "category": "clone",  "name": "بديل اكرو اويك 50 مل",             "price": 59,    "source": "synth", "image": "https://cdn.salla.sa/WYXWz/7f7063d8-9612-41a1-8aba-e998e218bd79-500x500-ezm9t8P4uZM4hTF98c9hLVpoibcJtLeaZH7WZj9n.jpg" }
+      ]
+    }
+  ]
+}
