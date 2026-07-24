@@ -162,32 +162,10 @@
     container.appendChild(row);
   }
 
-  function renderWebComponent(container) {
-    var list = document.createElement('salla-products-list');
-    list.setAttribute('source', CONFIG.source);
-    list.setAttribute('source-value', JSON.stringify(CONFIG.sourceValue || []));
-    list.setAttribute('limit', String(CONFIG.limit));
-    container.appendChild(list);
-    return list;
-  }
-
   function renderProducts(container, products) {
-    var canUseComponent = CONFIG.preferWebComponent &&
-      window.customElements && customElements.get('salla-products-list') &&
-      !CONFIG.storeId; // components only resolve the store inside a real storefront
-    if (canUseComponent) {
-      var el = renderWebComponent(container);
-      // Fallback if the component doesn't paint anything
-      setTimeout(function () {
-        if (!el.innerHTML.length && !(el.shadowRoot && el.shadowRoot.innerHTML.length)) {
-          log('web component empty — falling back to built-in cards');
-          el.remove();
-          renderCards(container, products);
-        }
-      }, 2500);
-    } else {
-      renderCards(container, products);
-    }
+    // We already hold the resolved sibling products, so render our own
+    // theme-agnostic cards directly (fast, consistent across all themes).
+    renderCards(container, products);
   }
 
   /* ---------- inline strip ---------- */
