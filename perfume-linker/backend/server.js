@@ -13,7 +13,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { URL } = require('url');
-const store = require('./store');
+const store = require('./lib/store');
 
 const PORT = process.env.PORT || 3456;
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -69,11 +69,11 @@ const server = http.createServer(async function (req, res) {
     try {
       if (event === 'app.store.authorize') {
         const token = body.data && (body.data.access_token || body.data.token);
-        if (storeId && token) { store.setToken(storeId, token, 'salla'); console.log('authorized', storeId); }
+        if (storeId && token) { await store.setToken(storeId, token, 'salla'); console.log('authorized', storeId); }
       } else if (event === 'app.installed') {
-        if (storeId) store.upsertStore(storeId, { active: true }, 'salla');
+        if (storeId) await store.upsertStore(storeId, { active: true }, 'salla');
       } else if (event === 'app.uninstalled') {
-        if (storeId) store.setActive(storeId, false);
+        if (storeId) await store.setActive(storeId, false);
       }
     } catch (e) { console.error('webhook error', e); }
     return send(res, 200, { ok: true });
@@ -84,7 +84,7 @@ const server = http.createServer(async function (req, res) {
     cors(res);
     const storeId = q.get('store');
     if (!storeId) return send(res, 400, { error: 'store required' });
-    const cfg = store.publicConfig(storeId);
+    const cfg = await store.publicConfig(storeId);
     return send(res, 200, cfg || { active: false });
   }
 
@@ -92,7 +92,7 @@ const server = http.createServer(async function (req, res) {
   if (p === '/api/admin/config' && req.method === 'GET') {
     const storeId = q.get('store');
     if (!storeId) return send(res, 400, { error: 'store required' });
-    const s = store.getStore(storeId);
+    const s = await store.getStore(storeId);
     if (!s) return send(res, 404, { error: 'store not installed' });
     const safe = Object.assign({}, s); delete safe.token;
     return send(res, 200, safe);
@@ -103,11 +103,11 @@ const server = http.createServer(async function (req, res) {
     const body = await readBody(req);
     const storeId = q.get('store') || body.store;
     if (!storeId) return send(res, 400, { error: 'store required' });
-    if (!store.getStore(storeId)) return send(res, 404, { error: 'store not installed' });
+    if (!(await store.getStore(storeId))) return send(res, 404, { error: 'store not installed' });
     const patch = body.config;
     if (!patch || typeof patch !== 'object') return send(res, 400, { error: 'config required' });
     delete patch.token; delete patch.storeId;
-    const updated = store.upsertStore(storeId, patch);
+    const updated = await store.upsertStore(storeId, patch);
     const safe = Object.assign({}, updated); delete safe.token;
     return send(res, 200, { ok: true, config: safe });
   }

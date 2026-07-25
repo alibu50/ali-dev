@@ -1,0 +1,8 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/webhook", "destination": "/api/webhook" },
+    { "source": "/settings/validate", "destination": "/api/settings-validate" },
+    { "source": "/dashboard", "destination": "/dashboard.html" }
+  ]
+}
