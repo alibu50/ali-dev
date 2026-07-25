@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>رابط العطور — الإعدادات</title>
+  <!-- Salla Embedded SDK: bridges this iframe to the merchant dashboard
+       (auto height, store context). Loaded before our app script. -->
+  <script src="https://cdn.jsdelivr.net/npm/@salla.sa/embedded-sdk@0.2.6/dist/umd/index.min.js"></script>
   <style>
     :root {
       --bg: #f6f7f9; --card: #fff; --ink: #1a1d24; --muted: #6b7280;
@@ -11,6 +14,11 @@
       --radius: 14px;
     }
     * { box-sizing: border-box; }
+    /* The Salla host sizes this iframe ONCE, from the height reported when the
+       embedded SDK initialises (its resize API is a no-op in v0.2.6). Claim a
+       floor so the frame is never collapsed, and report the real height after
+       the form renders. */
+    html, body { min-height: 1180px; }
     body { margin: 0; background: var(--bg); color: var(--ink);
       font-family: system-ui, "Segoe UI", Tahoma, sans-serif; font-size: 15px; }
     .wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px 80px; }
@@ -141,9 +149,45 @@
   <script>
     // Store id comes from the Salla embedded context; for local testing it's a query param.
     var qs = new URLSearchParams(location.search);
-    var STORE = qs.get('store');
+    var STORE = qs.get('store') || qs.get('store_id') || qs.get('merchant');
     var API = ''; // same origin
     var config = null;
+
+    // Inside the merchant dashboard we run in an iframe: initialise the Salla
+    // Embedded SDK so the frame reports its height (otherwise it collapses)
+    // and so we can read the store from the host context.
+    function initEmbedded() {
+      var sdk = (window.salla && window.salla.embedded) || (window.Salla && window.Salla.embedded);
+      if (!sdk) return Promise.resolve();
+      // init() waits for the host to send context; never let that block the UI.
+      var guard = new Promise(function (res) { setTimeout(res, 3000); });
+      return Promise.race([sdk.init({ autoResize: true }), guard])
+        .then(function (ctx) {
+          try {
+            var s = ctx && (ctx.store || (ctx.context && ctx.context.store));
+            if (!STORE && s && (s.id || s.store_id)) STORE = String(s.id || s.store_id);
+          } catch (e) {}
+          try { if (sdk.page && sdk.page.autoResize) sdk.page.autoResize(); } catch (e) {}
+          // The host keeps showing its skeleton until the app signals ready.
+          try { if (sdk.ready) sdk.ready(); } catch (e) {}
+        })
+        .catch(function () { /* not embedded / SDK unavailable — keep query param */ });
+    }
+
+    // Belt-and-braces height reporting: re-measure when content changes so the
+    // host frame grows with the form even if autoResize misses a mutation.
+    function watchHeight() {
+      var sdk = (window.salla && window.salla.embedded) || null;
+      if (!sdk || !sdk.page || !sdk.page.resize) return;
+      var last = 0;
+      function push() {
+        var h = document.documentElement.scrollHeight;
+        if (Math.abs(h - last) > 8) { last = h; try { sdk.page.resize(h); } catch (e) {} }
+      }
+      push();
+      setInterval(push, 800);
+      if (window.ResizeObserver) { try { new ResizeObserver(push).observe(document.body); } catch (e) {} }
+    }
 
     function $(id) { return document.getElementById(id); }
 
@@ -243,12 +287,16 @@
       }).catch(function () { $('status').textContent = 'خطأ في الاتصال'; });
     });
 
-    if (!STORE) {
-      $('loading').style.display = 'none';
-      $('main').style.display = 'block';
-      showError('لم يتم تحديد المتجر. افتح الإعدادات من داخل لوحة تحكم المتجر.');
-    } else {
-      fetch(API + '/api/admin/config?store=' + encodeURIComponent(STORE))
+    // Boot: render the form FIRST, then hand off to the dashboard host — the
+    // host locks in the iframe height from whatever we report at init time.
+    function loadConfig() {
+      if (!STORE) {
+        $('loading').style.display = 'none';
+        $('main').style.display = 'block';
+        showError('لم يتم تحديد المتجر. افتح الإعدادات من داخل لوحة تحكم المتجر.');
+        return Promise.resolve();
+      }
+      return fetch(API + '/api/admin/config?store=' + encodeURIComponent(STORE))
         .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
         .then(function (c) {
           config = c;
@@ -266,6 +314,11 @@
           showError('تعذّر تحميل الإعدادات (' + e.message + '). تأكد من تثبيت التطبيق على المتجر.');
         });
     }
+
+    loadConfig().then(function () {
+      // Give layout a frame to settle so scrollHeight is final, then connect.
+      return new Promise(function (res) { setTimeout(res, 120); });
+    }).then(initEmbedded).then(watchHeight);
   </script>
 </body>
 </html>
