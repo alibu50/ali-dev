@@ -5,7 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>رابط العطور — الإعدادات</title>
   <!-- Salla Embedded SDK: bridges this iframe to the merchant dashboard
-       (auto height, store context). Loaded before our app script. -->
+       (auto height, store context). Loaded before our app script.
+
+       The UMD build of @salla.sa/embedded-sdk@0.2.6 has a browser bug: its
+       message handler starts with `process.env.NODE_ENV === "production"`,
+       but `process` is undefined in browsers and the bundle ships no shim —
+       so every message from the host throws before it is handled and the
+       context handshake never completes (init() hangs). Defining `process`
+       first fixes it; "production" also keeps the SDK's own origin
+       allowlist check active (it includes s.salla.sa). -->
+  <script>window.process = window.process || { env: { NODE_ENV: 'production' } };</script>
   <script src="https://cdn.jsdelivr.net/npm/@salla.sa/embedded-sdk@0.2.6/dist/umd/index.min.js"></script>
   <style>
     :root {
@@ -177,6 +186,53 @@
       return null;
     }
 
+    // The SDK's init() only hands back { layout } — the store lives in the raw
+    // `embedded::context.provide` message from the host, so capture it ourselves.
+    var HOST_CTX = null;
+    (function captureContext() {
+      try {
+        window.addEventListener('message', function (e) {
+          var d = e && e.data;
+          if (!d || typeof d.event !== 'string') return;
+          if (d.event.indexOf('context') === -1) return;
+          HOST_CTX = d.payload || d;
+          DIAG.ctxEvent = d.event;
+          try { DIAG.ctxPayloadKeys = Object.keys(HOST_CTX); } catch (err) {}
+        });
+      } catch (e) {}
+    })();
+
+    // Last resort: ask the SDK for a token, then ask Salla's API which store
+    // this is. This is also the credential we can use to authorise our own API.
+    function resolveViaAuth(sdk) {
+      if (!sdk.auth) { DIAG.authUsable = false; return; }
+      // introspect() is the SDK's own 'who am I' call — try it before anything else
+      if (typeof sdk.auth.introspect === 'function') {
+        return Promise.resolve().then(function () { return sdk.auth.introspect(); })
+          .then(function (info) {
+            try { DIAG.introspectKeys = info && typeof info === 'object' ? Object.keys(info) : String(info); } catch (e) {}
+            var id = pluckStoreId(info || {});
+            if (id) { STORE = String(id); DIAG.storeResolved = STORE; DIAG.storeVia = 'introspect'; }
+          })
+          .catch(function (e) { DIAG.introspectError = String(e).slice(0, 140); });
+      }
+      if (typeof sdk.auth.getToken !== 'function') { DIAG.authUsable = false; return; }
+      return Promise.resolve().then(function () { return sdk.auth.getToken(); })
+        .then(function (tok) {
+          var t = tok && (tok.token || tok.access_token || tok);
+          DIAG.gotAuthToken = !!t;
+          DIAG.authTokenType = typeof t;
+          if (!t || typeof t !== 'string') return;
+          return fetch('https://api.salla.dev/admin/v2/store/info', { headers: { Authorization: 'Bearer ' + t } })
+            .then(function (r) { DIAG.storeInfoStatus = r.status; return r.ok ? r.json() : null; })
+            .then(function (j) {
+              var id = j && j.data && j.data.id;
+              if (id) { STORE = String(id); DIAG.storeResolved = STORE; DIAG.storeVia = 'auth+api'; }
+            });
+        })
+        .catch(function (e) { DIAG.authError = String(e).slice(0, 120); });
+    }
+
     function initEmbedded() {
       var sdk = (window.salla && window.salla.embedded) || (window.Salla && window.Salla.embedded);
       DIAG.sdkPresent = !!sdk;
@@ -191,11 +247,16 @@
           var found = null;
           try { found = pluckStoreId(ctx); } catch (e) {}
           // some builds park the context on the instance rather than the resolve value
+          if (!found) { try { found = pluckStoreId(HOST_CTX || {}); } catch (e) {} }
           if (!found) { try { found = pluckStoreId(sdk.context || sdk.layout || {}); } catch (e) {} }
+          if (!found) { DIAG.authKeys = (function () { try { return Object.keys(sdk.auth || {}); } catch (e) { return null; } })(); }
           if (!STORE && found) STORE = found;
           DIAG.storeResolved = STORE || null;
+          // Signal the host FIRST — it sizes the frame off this; only then go
+          // hunting for the store id, so a slow lookup can't leave us at 0px.
           try { if (sdk.page && sdk.page.autoResize) sdk.page.autoResize(); } catch (e) {}
           try { if (sdk.ready) sdk.ready(); } catch (e) {}
+          if (!STORE) { return resolveViaAuth(sdk); }
         })
         .catch(function (e) { DIAG.initError = String(e); });
     }
@@ -357,8 +418,7 @@
     // then load and render, then report diagnostics.
     initEmbedded()
       .then(loadConfig)
-      .then(watchHeight)
-      ;
+      .then(watchHeight);
   </script>
 </body>
 </html>
