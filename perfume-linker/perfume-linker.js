@@ -17,7 +17,7 @@
 
   var CONFIG = Object.assign({
     storeId: null,               // required outside a real storefront
-    backendBase: 'https://range-adaptor-greatest-panels.trycloudflare.com', // config source (embedded dashboard); swap for Vercel URL in prod
+    backendBase: 'https://perfume-linker.hjr-apps.workers.dev', // config source (embedded dashboard); swap for Vercel URL in prod
     apiBase: 'https://api.salla.dev/store/v1',
 
     // 'tags'    → source-value is [tagId] (production mode)

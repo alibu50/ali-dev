@@ -11,7 +11,7 @@ binding = "ASSETS"
 # `id` is filled in after: npx wrangler kv namespace create PL_KV
 [[kv_namespaces]]
 binding = "PL_KV"
-id = "REPLACE_WITH_KV_ID"
+id = "50579d0a2b0a418e8ae4606a244ccc5d"
 
 [vars]
 # "signature" (HMAC of raw body) | "token" (header equality) | "none"
