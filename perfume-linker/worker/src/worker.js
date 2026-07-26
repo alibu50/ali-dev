@@ -205,6 +205,7 @@ export default {
       return json({ success: true });
     }
 
+
     /* embedded dashboard UI */
     if (path === '/dashboard' || path.startsWith('/dashboard/')) {
       return env.ASSETS.fetch(new Request(new URL('/dashboard.html', request.url), request));

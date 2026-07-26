@@ -156,22 +156,60 @@
     // Inside the merchant dashboard we run in an iframe: initialise the Salla
     // Embedded SDK so the frame reports its height (otherwise it collapses)
     // and so we can read the store from the host context.
+    // Salla's iframe URL carries mode/locale/token/app_id/dark — but NO store id,
+    // and the token is encrypted. The store therefore has to come from the SDK's
+    // context handshake, so init() runs BEFORE we try to load anything.
+    var DIAG = { params: Array.from(qs.keys()) };
+
+    function pluckStoreId(o, depth) {
+      if (!o || typeof o !== 'object' || (depth || 0) > 4) return null;
+      for (var k of Object.keys(o)) {
+        var v = o[k];
+        if (/^(store|merchant)(_?id)?$/i.test(k)) {
+          if (typeof v === 'number' || typeof v === 'string') return String(v);
+          if (v && typeof v === 'object' && (v.id || v.store_id)) return String(v.id || v.store_id);
+        }
+        if (v && typeof v === 'object') {
+          var found = pluckStoreId(v, (depth || 0) + 1);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+
     function initEmbedded() {
       var sdk = (window.salla && window.salla.embedded) || (window.Salla && window.Salla.embedded);
+      DIAG.sdkPresent = !!sdk;
       if (!sdk) return Promise.resolve();
-      // init() waits for the host to send context; never let that block the UI.
-      var guard = new Promise(function (res) { setTimeout(res, 3000); });
+      // Give the host a generous window — this is the only route to the store id.
+      var guard = new Promise(function (res) { setTimeout(function () { res('__timeout__'); }, 8000); });
       return Promise.race([sdk.init({ autoResize: true }), guard])
         .then(function (ctx) {
-          try {
-            var s = ctx && (ctx.store || (ctx.context && ctx.context.store));
-            if (!STORE && s && (s.id || s.store_id)) STORE = String(s.id || s.store_id);
-          } catch (e) {}
+          DIAG.initTimedOut = ctx === '__timeout__';
+          try { DIAG.ctxKeys = ctx && typeof ctx === 'object' ? Object.keys(ctx) : String(ctx); } catch (e) {}
+          try { DIAG.sdkKeys = Object.keys(sdk); } catch (e) {}
+          var found = null;
+          try { found = pluckStoreId(ctx); } catch (e) {}
+          // some builds park the context on the instance rather than the resolve value
+          if (!found) { try { found = pluckStoreId(sdk.context || sdk.layout || {}); } catch (e) {} }
+          if (!STORE && found) STORE = found;
+          DIAG.storeResolved = STORE || null;
           try { if (sdk.page && sdk.page.autoResize) sdk.page.autoResize(); } catch (e) {}
-          // The host keeps showing its skeleton until the app signals ready.
           try { if (sdk.ready) sdk.ready(); } catch (e) {}
         })
-        .catch(function () { /* not embedded / SDK unavailable — keep query param */ });
+        .catch(function (e) { DIAG.initError = String(e); });
+    }
+
+    // Report what the host actually gave us — a 0-height cross-origin iframe
+    // can't be inspected from the outside. Safe: ids and key names only.
+    function sendDiag() {
+      try {
+        DIAG.scrollHeight = document.documentElement.scrollHeight;
+        DIAG.inIframe = window.top !== window.self;
+        navigator.sendBeacon
+          ? navigator.sendBeacon(API + '/api/debug', new Blob([JSON.stringify(DIAG)], { type: 'application/json' }))
+          : fetch(API + '/api/debug', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(DIAG) });
+      } catch (e) {}
     }
 
     // Belt-and-braces height reporting: re-measure when content changes so the
@@ -315,10 +353,12 @@
         });
     }
 
-    loadConfig().then(function () {
-      // Give layout a frame to settle so scrollHeight is final, then connect.
-      return new Promise(function (res) { setTimeout(res, 120); });
-    }).then(initEmbedded).then(watchHeight);
+    // SDK first (it's the only source of the store id inside the dashboard),
+    // then load and render, then report diagnostics.
+    initEmbedded()
+      .then(loadConfig)
+      .then(watchHeight)
+      ;
   </script>
 </body>
 </html>
