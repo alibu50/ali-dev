@@ -1,0 +1,20 @@
+name = "perfume-linker"
+main = "src/worker.js"
+compatibility_date = "2026-01-01"
+
+# Embedded dashboard UI (served at /dashboard)
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# Per-store config + merchant tokens.
+# `id` is filled in after: npx wrangler kv namespace create PL_KV
+[[kv_namespaces]]
+binding = "PL_KV"
+id = "REPLACE_WITH_KV_ID"
+
+[vars]
+# "signature" (HMAC of raw body) | "token" (header equality) | "none"
+SALLA_WEBHOOK_STRATEGY = "signature"
+# SALLA_WEBHOOK_SECRET is a secret, not a var:
+#   npx wrangler secret put SALLA_WEBHOOK_SECRET

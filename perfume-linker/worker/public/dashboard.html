@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>رابط العطور — الإعدادات</title>
+  <!-- Salla Embedded SDK: bridges this iframe to the merchant dashboard
+       (auto height, store context). Loaded before our app script. -->
+  <script src="https://cdn.jsdelivr.net/npm/@salla.sa/embedded-sdk@0.2.6/dist/umd/index.min.js"></script>
+  <style>
+    :root {
+      --bg: #f6f7f9; --card: #fff; --ink: #1a1d24; --muted: #6b7280;
+      --line: #e6e8ec; --brand: #0a7d4f; --brand-soft: #eafaf3; --danger: #b3261e;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    /* The Salla host sizes this iframe ONCE, from the height reported when the
+       embedded SDK initialises (its resize API is a no-op in v0.2.6). Claim a
+       floor so the frame is never collapsed, and report the real height after
+       the form renders. */
+    html, body { min-height: 1180px; }
+    body { margin: 0; background: var(--bg); color: var(--ink);
+      font-family: system-ui, "Segoe UI", Tahoma, sans-serif; font-size: 15px; }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px 80px; }
+    header.top { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    header.top .logo { width: 40px; height: 40px; border-radius: 10px; background: var(--brand-soft);
+      display: grid; place-items: center; font-size: 22px; }
+    header.top h1 { font-size: 1.25rem; margin: 0; }
+    header.top p { margin: 2px 0 0; color: var(--muted); font-size: .85rem; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+      padding: 18px 18px; margin-bottom: 16px; }
+    .card h2 { font-size: 1.02rem; margin: 0 0 4px; }
+    .card .hint { color: var(--muted); font-size: .84rem; margin: 0 0 16px; }
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-weight: 600; font-size: .88rem; margin-bottom: 6px; }
+    .field input[type=text], .field input[type=number], .field textarea, .field select {
+      width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px;
+      font: inherit; background: #fbfbfc; color: inherit; }
+    .field textarea { resize: vertical; min-height: 60px; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .switch { position: relative; width: 46px; height: 26px; flex: none; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; inset: 0; background: #cfd4da; border-radius: 999px; transition: .15s; cursor: pointer; }
+    .slider::before { content: ""; position: absolute; height: 20px; width: 20px; inset-inline-start: 3px; top: 3px;
+      background: #fff; border-radius: 50%; transition: .15s; }
+    .switch input:checked + .slider { background: var(--brand); }
+    .switch input:checked + .slider::before { transform: translateX(-20px); }
+    .tpl-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .tpl { border: 2px solid var(--line); border-radius: 12px; padding: 10px; cursor: pointer; text-align: center;
+      font-size: .82rem; background: #fbfbfc; }
+    .tpl.sel { border-color: var(--brand); background: var(--brand-soft); }
+    .tpl .swatch { height: 42px; border-radius: 8px; margin-bottom: 8px; }
+    .rows-list { display: flex; flex-direction: column; gap: 10px; }
+    .rowitem { border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: #fbfbfc; }
+    .rowitem .rowhead { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .rowitem .rowhead input { flex: 1; }
+    .btn { border: 0; border-radius: 10px; padding: 10px 16px; font: inherit; font-weight: 700; cursor: pointer; }
+    .btn.primary { background: var(--brand); color: #fff; }
+    .btn.ghost { background: transparent; border: 1px solid var(--line); }
+    .btn.small { padding: 6px 10px; font-size: .82rem; }
+    .btn.link { background: transparent; color: var(--brand); padding: 6px 4px; }
+    .btn.del { background: transparent; color: var(--danger); border: 1px solid #f2d5d3; }
+    .savebar { position: fixed; inset-inline: 0; bottom: 0; background: rgba(255,255,255,.92);
+      backdrop-filter: blur(6px); border-top: 1px solid var(--line); padding: 12px 16px; }
+    .savebar .inner { max-width: 760px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .savebar .status { color: var(--muted); font-size: .85rem; }
+    .banner { padding: 12px 14px; border-radius: 10px; margin-bottom: 16px; font-size: .88rem; }
+    .banner.err { background: #fdecea; color: var(--danger); }
+    .muted { color: var(--muted); }
+    .loading { text-align: center; padding: 60px 0; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap" id="app">
+    <div class="loading" id="loading">جارٍ التحميل…</div>
+    <div id="main" style="display:none">
+      <header class="top">
+        <div class="logo">🧴</div>
+        <div>
+          <h1>رابط العطور</h1>
+          <p>اربط إصدارات العطر الواحد واعرضها معاً — مع نافذة خروج وصفوف مخصصة</p>
+        </div>
+      </header>
+
+      <div id="banner"></div>
+
+      <!-- Related products widget -->
+      <section class="card">
+        <h2>قسم المنتجات المرتبطة</h2>
+        <p class="hint">يظهر في صفحة المنتج ويعرض بقية إصدارات نفس العطر (عبوة، تستر، تقسيم، عينة، بديل).</p>
+        <div class="field toggle">
+          <label style="margin:0">تفعيل القسم</label>
+          <span class="switch"><input type="checkbox" id="w_enabled" /><span class="slider"></span></span>
+        </div>
+        <div class="field"><label>عنوان القسم</label><input type="text" id="w_title" /></div>
+        <div class="row2">
+          <div class="field"><label>أقصى عدد للمنتجات</label><input type="number" id="w_limit" min="2" max="20" /></div>
+          <div class="field"><label>مكان العرض</label>
+            <select id="w_placement">
+              <option value="after_buybox">بعد زر الشراء</option>
+              <option value="after_description">بعد الوصف</option>
+              <option value="custom">مخصص (CSS)</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Exit-intent popup -->
+      <section class="card">
+        <h2>نافذة الخروج المنبثقة</h2>
+        <p class="hint">تظهر عند محاولة العميل مغادرة الصفحة، وتعرض نفس الإصدارات مع كوبون اختياري.</p>
+        <div class="field toggle">
+          <label style="margin:0">تفعيل النافذة</label>
+          <span class="switch"><input type="checkbox" id="p_enabled" /><span class="slider"></span></span>
+        </div>
+        <div class="field"><label>تصميم النافذة</label>
+          <div class="tpl-grid" id="p_templates">
+            <div class="tpl" data-tpl="classic"><div class="swatch" style="background:#eafaf3"></div>كلاسيكي</div>
+            <div class="tpl" data-tpl="bold"><div class="swatch" style="background:#111"></div>جريء</div>
+            <div class="tpl" data-tpl="minimal"><div class="swatch" style="background:#f2efe9"></div>بسيط</div>
+          </div>
+        </div>
+        <div class="field"><label>العنوان</label><input type="text" id="p_title" /></div>
+        <div class="field"><label>النص</label><textarea id="p_subtitle"></textarea></div>
+        <div class="row2">
+          <div class="field"><label>كود خصم (اختياري)</label><input type="text" id="p_coupon" placeholder="مثال: SUMMER10" /></div>
+          <div class="field"><label>المدة قبل الظهور مجدداً (ساعات)</label><input type="number" id="p_cooldown" min="0" max="168" /></div>
+        </div>
+      </section>
+
+      <!-- Custom curated rows -->
+      <section class="card">
+        <h2>صفوف مخصصة</h2>
+        <p class="hint">أنشئ صفوفاً موسمية أو مقترحة — مثل «مجموعة الصيف» — بربط وسم (tag) بمجموعة عطور تختارها.</p>
+        <div class="rows-list" id="rows"></div>
+        <button class="btn link" id="addRow">＋ إضافة صف جديد</button>
+      </section>
+    </div>
+  </div>
+
+  <div class="savebar" id="savebar" style="display:none">
+    <div class="inner">
+      <span class="status" id="status"></span>
+      <button class="btn primary" id="save">حفظ التغييرات</button>
+    </div>
+  </div>
+
+  <script>
+    // Store id comes from the Salla embedded context; for local testing it's a query param.
+    var qs = new URLSearchParams(location.search);
+    var STORE = qs.get('store') || qs.get('store_id') || qs.get('merchant');
+    var API = ''; // same origin
+    var config = null;
+
+    // Inside the merchant dashboard we run in an iframe: initialise the Salla
+    // Embedded SDK so the frame reports its height (otherwise it collapses)
+    // and so we can read the store from the host context.
+    function initEmbedded() {
+      var sdk = (window.salla && window.salla.embedded) || (window.Salla && window.Salla.embedded);
+      if (!sdk) return Promise.resolve();
+      // init() waits for the host to send context; never let that block the UI.
+      var guard = new Promise(function (res) { setTimeout(res, 3000); });
+      return Promise.race([sdk.init({ autoResize: true }), guard])
+        .then(function (ctx) {
+          try {
+            var s = ctx && (ctx.store || (ctx.context && ctx.context.store));
+            if (!STORE && s && (s.id || s.store_id)) STORE = String(s.id || s.store_id);
+          } catch (e) {}
+          try { if (sdk.page && sdk.page.autoResize) sdk.page.autoResize(); } catch (e) {}
+          // The host keeps showing its skeleton until the app signals ready.
+          try { if (sdk.ready) sdk.ready(); } catch (e) {}
+        })
+        .catch(function () { /* not embedded / SDK unavailable — keep query param */ });
+    }
+
+    // Belt-and-braces height reporting: re-measure when content changes so the
+    // host frame grows with the form even if autoResize misses a mutation.
+    function watchHeight() {
+      var sdk = (window.salla && window.salla.embedded) || null;
+      if (!sdk || !sdk.page || !sdk.page.resize) return;
+      var last = 0;
+      function push() {
+        var h = document.documentElement.scrollHeight;
+        if (Math.abs(h - last) > 8) { last = h; try { sdk.page.resize(h); } catch (e) {} }
+      }
+      push();
+      setInterval(push, 800);
+      if (window.ResizeObserver) { try { new ResizeObserver(push).observe(document.body); } catch (e) {} }
+    }
+
+    function $(id) { return document.getElementById(id); }
+
+    function showError(msg) {
+      $('banner').innerHTML = '<div class="banner err">' + msg + '</div>';
+    }
+
+    function templateSelect(val) {
+      Array.prototype.forEach.call(document.querySelectorAll('#p_templates .tpl'), function (el) {
+        el.classList.toggle('sel', el.dataset.tpl === val);
+      });
+    }
+
+    function renderRows() {
+      var host = $('rows');
+      host.innerHTML = '';
+      (config.rows || []).forEach(function (row, i) {
+        var div = document.createElement('div');
+        div.className = 'rowitem';
+        div.innerHTML =
+          '<div class="rowhead">' +
+            '<span class="switch"><input type="checkbox" ' + (row.enabled ? 'checked' : '') + ' data-i="' + i + '" data-k="enabled"><span class="slider"></span></span>' +
+            '<input type="text" placeholder="عنوان الصف (مثال: مجموعة الصيف)" value="' + (row.title || '').replace(/"/g,'&quot;') + '" data-i="' + i + '" data-k="title">' +
+            '<button class="btn del small" data-del="' + i + '">حذف</button>' +
+          '</div>' +
+          '<div class="row2">' +
+            '<div class="field" style="margin:0"><label>رقم الوسم (Tag ID)</label><input type="number" value="' + (row.tagId || '') + '" data-i="' + i + '" data-k="tagId" placeholder="مثال: 27309170"></div>' +
+            '<div class="field" style="margin:0"><label>مكان العرض</label><select data-i="' + i + '" data-k="placement">' +
+              '<option value="product"' + (row.placement === 'product' ? ' selected' : '') + '>صفحة المنتج</option>' +
+              '<option value="homepage"' + (row.placement === 'homepage' ? ' selected' : '') + '>الصفحة الرئيسية</option>' +
+            '</select></div>' +
+          '</div>';
+        host.appendChild(div);
+      });
+      // wire row inputs
+      Array.prototype.forEach.call(host.querySelectorAll('[data-i]'), function (el) {
+        el.addEventListener('input', function () {
+          var i = +el.dataset.i, k = el.dataset.k;
+          config.rows[i][k] = el.type === 'checkbox' ? el.checked : (el.type === 'number' ? (el.value ? +el.value : '') : el.value);
+        });
+        el.addEventListener('change', function () {
+          var i = +el.dataset.i, k = el.dataset.k;
+          config.rows[i][k] = el.type === 'checkbox' ? el.checked : el.value;
+        });
+      });
+      Array.prototype.forEach.call(host.querySelectorAll('[data-del]'), function (b) {
+        b.addEventListener('click', function () { config.rows.splice(+b.dataset.del, 1); renderRows(); });
+      });
+    }
+
+    function fill() {
+      $('w_enabled').checked = !!config.widget.enabled;
+      $('w_title').value = config.widget.title || '';
+      $('w_limit').value = config.widget.limit || 8;
+      $('w_placement').value = config.widget.placement || 'after_buybox';
+      $('p_enabled').checked = !!config.popup.enabled;
+      templateSelect(config.popup.template || 'classic');
+      $('p_title').value = config.popup.title || '';
+      $('p_subtitle').value = config.popup.subtitle || '';
+      $('p_coupon').value = config.popup.coupon || '';
+      $('p_cooldown').value = config.popup.cooldownHours != null ? config.popup.cooldownHours : 24;
+      renderRows();
+    }
+
+    function collect() {
+      config.widget.enabled = $('w_enabled').checked;
+      config.widget.title = $('w_title').value;
+      config.widget.limit = +$('w_limit').value || 8;
+      config.widget.placement = $('w_placement').value;
+      config.popup.enabled = $('p_enabled').checked;
+      var sel = document.querySelector('#p_templates .tpl.sel');
+      config.popup.template = sel ? sel.dataset.tpl : 'classic';
+      config.popup.title = $('p_title').value;
+      config.popup.subtitle = $('p_subtitle').value;
+      config.popup.coupon = $('p_coupon').value;
+      config.popup.cooldownHours = +$('p_cooldown').value || 0;
+      return config;
+    }
+
+    document.querySelectorAll('#p_templates .tpl').forEach(function (el) {
+      el.addEventListener('click', function () { templateSelect(el.dataset.tpl); });
+    });
+    $('addRow').addEventListener('click', function () {
+      config.rows = config.rows || [];
+      config.rows.push({ id: 'r' + Date.now(), title: '', tagId: '', placement: 'product', enabled: true });
+      renderRows();
+    });
+    $('save').addEventListener('click', function () {
+      $('status').textContent = 'جارٍ الحفظ…';
+      collect();
+      fetch(API + '/api/admin/config?store=' + encodeURIComponent(STORE), {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ store: STORE, config: { widget: config.widget, popup: config.popup, rows: config.rows } })
+      }).then(function (r) { return r.json(); }).then(function (j) {
+        $('status').textContent = j.ok ? '✓ تم الحفظ' : 'تعذّر الحفظ';
+        setTimeout(function () { $('status').textContent = ''; }, 2500);
+      }).catch(function () { $('status').textContent = 'خطأ في الاتصال'; });
+    });
+
+    // Boot: render the form FIRST, then hand off to the dashboard host — the
+    // host locks in the iframe height from whatever we report at init time.
+    function loadConfig() {
+      if (!STORE) {
+        $('loading').style.display = 'none';
+        $('main').style.display = 'block';
+        showError('لم يتم تحديد المتجر. افتح الإعدادات من داخل لوحة تحكم المتجر.');
+        return Promise.resolve();
+      }
+      return fetch(API + '/api/admin/config?store=' + encodeURIComponent(STORE))
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function (c) {
+          config = c;
+          config.widget = config.widget || {};
+          config.popup = config.popup || {};
+          config.rows = config.rows || [];
+          $('loading').style.display = 'none';
+          $('main').style.display = 'block';
+          $('savebar').style.display = 'block';
+          fill();
+        })
+        .catch(function (e) {
+          $('loading').style.display = 'none';
+          $('main').style.display = 'block';
+          showError('تعذّر تحميل الإعدادات (' + e.message + '). تأكد من تثبيت التطبيق على المتجر.');
+        });
+    }
+
+    loadConfig().then(function () {
+      // Give layout a frame to settle so scrollHeight is final, then connect.
+      return new Promise(function (res) { setTimeout(res, 120); });
+    }).then(initEmbedded).then(watchHeight);
+  </script>
+</body>
+</html>
