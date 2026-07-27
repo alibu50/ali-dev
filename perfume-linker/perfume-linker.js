@@ -265,6 +265,33 @@
       '.pl-coupon{display:inline-flex;align-items:center;gap:9px;margin:0 0 16px;padding:9px 14px;cursor:pointer;',
         'border:1px dashed var(--pl-accent);border-radius:12px;background:var(--pl-accent-soft);color:var(--pl-accent-ink);font-weight:800;font-size:.92rem}',
       '.pl-cp-hint{font-weight:600;font-size:.78rem;opacity:.75}',
+      /* --- popup templates (merchant picks one in the dashboard) --- */
+      /* bold: dark, high-contrast, for brands that want the popup to shout */
+      '#perfume-linker-popup.pl-tpl-bold{background:rgba(10,7,4,.72)}',
+      '.pl-tpl-bold .pl-modal{background:#17110c;color:#f6efe6;box-shadow:0 30px 80px rgba(0,0,0,.6)}',
+      '.pl-tpl-bold .pl-modal::before{height:5px;background:linear-gradient(90deg,#d98b3f,#f0c48a)}',
+      '.pl-tpl-bold .pl-ptitle{color:#fff;font-size:1.45rem}',
+      '.pl-tpl-bold .pl-psub{color:#c9bdaf}',
+      '.pl-tpl-bold .pl-x{background:#2a2018;color:#f6efe6}',
+      '.pl-tpl-bold .pl-x:hover{background:#3a2c20}',
+      '.pl-tpl-bold .pl-card{background:#211812;border-color:rgba(255,255,255,.10)}',
+      '.pl-tpl-bold .pl-name{color:#eee5d9}',
+      '.pl-tpl-bold .pl-price{color:#fff}',
+      '.pl-tpl-bold .pl-price.pl-sale{color:#f0c48a}',
+      '.pl-tpl-bold .pl-was{color:#9c8e7f}',
+      '.pl-tpl-bold .pl-coupon{background:#2a2018;border-color:#d98b3f;color:#f0c48a}',
+      '.pl-tpl-bold .pl-thumb{background-color:#2a2018}',
+      /* minimal: quiet, no accent bar, hairline borders */
+      '#perfume-linker-popup.pl-tpl-minimal{background:rgba(28,20,14,.38)}',
+      '.pl-tpl-minimal .pl-modal{border-radius:10px;box-shadow:0 18px 44px rgba(28,20,14,.20);border:1px solid var(--pl-line)}',
+      '.pl-tpl-minimal .pl-modal::before{display:none}',
+      '.pl-tpl-minimal .pl-ptitle{font-size:1.12rem;font-weight:700}',
+      '.pl-tpl-minimal .pl-psub{font-size:.85rem}',
+      '.pl-tpl-minimal .pl-x{background:transparent;border:1px solid var(--pl-line)}',
+      '.pl-tpl-minimal .pl-card{border-radius:8px;box-shadow:none}',
+      '.pl-tpl-minimal .pl-card:hover{transform:none;box-shadow:0 4px 12px rgba(28,20,14,.10)}',
+      '.pl-tpl-minimal .pl-badge{background:rgba(36,28,21,.45);font-weight:700}',
+      '.pl-tpl-minimal .pl-coupon{border-style:solid;background:transparent}',
       '@media (max-width:520px){.pl-card{flex-basis:150px}}',
       '@media (prefers-reduced-motion:reduce){.pl-card,.pl-anim,#perfume-linker-popup,.pl-modal{animation:none!important;opacity:1!important}}'
     ].join('');
@@ -403,6 +430,9 @@
     var overlay = document.createElement('div');
     overlay.id = 'perfume-linker-popup';
     overlay.setAttribute('dir', 'rtl');
+    // merchant-selected look: classic (default) | bold | minimal
+    var tpl = CONFIG.popupTemplate;
+    if (tpl === 'bold' || tpl === 'minimal') overlay.className = 'pl-tpl-' + tpl;
 
     var card = document.createElement('div');
     card.className = 'pl-modal';
@@ -518,6 +548,7 @@
   if (CONFIG.debug) {
     window.__plRenderStrip = renderStrip;
     window.__plShowPopup = showPopup;
+    window.__plConfig = CONFIG;
   }
 
   if (document.readyState === 'loading') {
