@@ -206,6 +206,18 @@ export default {
     }
 
 
+    /* storefront widget — served from here so the app owns its own hosting
+       (no third-party Pages URL baked into every merchant's store) */
+    if (path === '/widget.js') {
+      const res = await env.ASSETS.fetch(new Request(new URL('/widget.js', request.url), request));
+      const out = new Response(res.body, res);
+      out.headers.set('content-type', 'application/javascript; charset=utf-8');
+      out.headers.set('access-control-allow-origin', '*');
+      // long cache + immutable: bust it with ?v= from the App Snippet loader
+      out.headers.set('cache-control', 'public, max-age=86400');
+      return out;
+    }
+
     /* embedded dashboard UI */
     if (path === '/dashboard' || path.startsWith('/dashboard/')) {
       return env.ASSETS.fetch(new Request(new URL('/dashboard.html', request.url), request));
