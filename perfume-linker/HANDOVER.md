@@ -71,18 +71,31 @@ Then bump the App Snippet so stores pull the new build (see §5).
 
 ## 5. Deploying a widget change
 
-The storefront snippet is served from GitHub Pages and loaded by an App Snippet that
-Salla injects into every store. Two steps, both required:
+The Worker serves the widget itself at `/widget.js`. Canonical source:
+`worker/public/widget.js`. No third-party hosting is in the chain, so renaming or
+moving a repo can never break live stores.
 
-1. Push `perfume-linker.js`; wait for Pages (~1 min).
-2. Bump the snippet's `?v=` so the CDN cache is bypassed — `PUT`
+1. Edit `worker/public/widget.js`, then `npx wrangler@3.114.14 deploy`.
+2. Bump the App Snippet's `?v=` so stores pull the new build — `PUT`
    `/partners/v1/api/app/{id}/snippets/{snippetId}` with
    `{name, place:"before", tag:"body", c8fbt33yM0:"<js>"}`.
    The content field really is named `c8fbt33yM0`, and it takes **JS, not HTML**.
 
-> Planned change: serve the snippet from the Worker (`/widget.js`) so this stops
-> depending on a personal GitHub Pages URL. Do this before any repo rename —
-> if that URL 404s, the widget dies on every installed store.
+The whole loader Salla stores is:
+
+```js
+(function () {
+  var el = document.createElement('script');
+  el.defer = true;
+  el.src = '<WORKER>/widget.js?v=<timestamp>';
+  (document.head || document.body).appendChild(el);
+})();
+```
+
+Salla caches that wrapper for a few minutes, so storefronts do not update instantly.
+
+> `perfume-linker.js` at the repo root is the old GitHub Pages copy, kept only until
+> the live snippet finishes cutting over. Do not edit it.
 
 ---
 
